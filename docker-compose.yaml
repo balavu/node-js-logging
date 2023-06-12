@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  nodejs-app:                # New service for the Node.js application
+  nodejs-app:                
     build: 
-      context: ./node-js-getting-started   # Directory containing your Node.js code and Dockerfile
-      dockerfile: Dockerfile  # If your Dockerfile is named something else, replace 'Dockerfile' with your file's name
+      context: ./nodejs-application  
+      dockerfile: Dockerfile  
     container_name: nodejs-app
     labels:
       logging: "promtail"
     ports:
-      - 5001:5001           # Port 3000 is often used for Node.js applications, replace it if you need a different port
+      - 5001:5001           
     networks:
       - app
 
@@ -44,7 +44,7 @@ services:
     command: -config.file=/etc/promtail/docker-config.yaml
     depends_on:
       - loki
-      - nodejs-app             # Ensure that promtail starts after the Node.js application
+      - nodejs-app       
     networks:
       - app
 
