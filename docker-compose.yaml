@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  nodejs-app:                # New service for the Node.js application
+    build: 
+      context: ./node-js-getting-started   # Directory containing your Node.js code and Dockerfile
+      dockerfile: Dockerfile  # If your Dockerfile is named something else, replace 'Dockerfile' with your file's name
+    container_name: nodejs-app
+    labels:
+      logging: "promtail"
+    ports:
+      - 5001:5001           # Port 3000 is often used for Node.js applications, replace it if you need a different port
+    networks:
+      - app
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    networks:
+      - app
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app
+
+  promtail:
+    image:  grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./config/promtail.yaml:/etc/promtail/docker-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/docker-config.yaml
+    depends_on:
+      - loki
+      - nodejs-app             # Ensure that promtail starts after the Node.js application
+    networks:
+      - app
+
+networks:
+  app:
+    name: app
+
